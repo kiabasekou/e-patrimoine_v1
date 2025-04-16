@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Liste des Biens | Gestion du Patrimoine{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">📋 Liste des biens enregistrés</h4>
+            <a href="{% url 'biens:bien_create' %}" class="btn btn-light btn-sm">➕ Ajouter un bien</a>
+        </div>
+        <div class="card-body">
+            {% if biens %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nom</th>
+                                <th>Catégorie</th>
+                                <th>Entité</th>
+                                <th>Valeur actuelle (FCFA)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bien in biens %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'biens:bien_detail' bien.pk %}">{{ bien.nom }}</a>
+                                </td>
+                                <td>{{ bien.categorie.nom }}</td>
+                                <td>{{ bien.entite.nom }}</td>
+                                <td>{{ bien.valeur_actuelle|floatformat:"0" }}</td>
+                                <td>
+                                    <a href="{% url 'biens:bien_update' bien.pk %}" class="btn btn-sm btn-outline-primary">✏️</a>
+                                    <a href="{% url 'biens:bien_delete' bien.pk %}" class="btn btn-sm btn-outline-danger">🗑️</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    📭 Aucun bien enregistré pour le moment.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

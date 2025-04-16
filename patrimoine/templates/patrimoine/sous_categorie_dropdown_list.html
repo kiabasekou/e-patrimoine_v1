@@ -1,0 +1,6 @@
+
+{# Exemple : sous_categorie_dropdown_list.html amélioré #}
+<option value="">--- Sélectionner une sous-catégorie ---</option>
+{% for sc in sous_categories %}
+  <option value="{{ sc.id }}">{{ sc.nom }}</option>
+{% endfor %}

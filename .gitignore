@@ -1,0 +1,21 @@
+# Environnements Python
+env/
+*.pyc
+__pycache__/
+
+# Fichiers Django
+db.sqlite3
+
+# Éditeur
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Migrations
+*/migrations/*.pyc
+*/migrations/__pycache__/
+*/migrations/*.py
+!*/migrations/__init__.py

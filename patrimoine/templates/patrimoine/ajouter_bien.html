@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+  <h2>Ajouter un Bien</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ bien_form.as_p }}
+    
+    {% if profil_form %}
+      <h4>Profil technique spécifique :</h4>
+      {{ profil_form.as_p }}
+    {% endif %}
+
+    <button type="submit">Enregistrer</button>
+  </form>
+{% endblock %}
+*

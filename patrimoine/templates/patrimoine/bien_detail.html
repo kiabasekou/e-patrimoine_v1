@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détail du Bien | Gestion du Patrimoine{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">🔎 Détail du bien : {{ bien.nom }}</h4>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-4">Catégorie</dt>
+                <dd class="col-sm-8">{{ bien.categorie.nom }}</dd>
+
+                <dt class="col-sm-4">Sous-catégorie</dt>
+                <dd class="col-sm-8">{{ bien.sous_categorie.nom }}</dd>
+
+                <dt class="col-sm-4">Entité affectée</dt>
+                <dd class="col-sm-8">{{ bien.entite.nom }}</dd>
+
+                <dt class="col-sm-4">Valeur initiale</dt>
+                <dd class="col-sm-8">{{ bien.valeur_initiale|floatformat:"0" }} FCFA</dd>
+
+                <dt class="col-sm-4">Date d'acquisition</dt>
+                <dd class="col-sm-8">{{ bien.date_acquisition }}</dd>
+
+                <dt class="col-sm-4">Valeur actuelle estimée</dt>
+                <dd class="col-sm-8">{{ bien.valeur_actuelle|default:"Non calculée" }} FCFA</dd>
+            </dl>
+
+            <hr>
+            <h5 class="text-muted">Historique des valeurs</h5>
+            {% if historiques %}
+                <ul class="list-group">
+                    {% for h in historiques %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ h.date }}</span>
+                            <strong>{{ h.valeur|floatformat:"0" }} FCFA</strong>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="alert alert-warning mt-3">Aucun historique de valeur enregistré.</div>
+            {% endif %}
+
+            <hr>
+            <h5 class="text-muted">Ajouter une nouvelle estimation</h5>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-outline-primary">💾 Ajouter</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

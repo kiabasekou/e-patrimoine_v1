@@ -1,0 +1,27 @@
+
+
+{# Exemple : bien_confirm_delete.html amélioré #}
+{% extends 'base.html' %}
+
+{% block title %}Suppression d'un bien | Gestion du Patrimoine{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card border-danger shadow-sm">
+    <div class="card-header bg-danger text-white">
+      <h4 class="mb-0">Supprimer le bien : {{ object.nom }}</h4>
+    </div>
+    <div class="card-body">
+      <p class="lead">⚠️ Êtes-vous sûr de vouloir supprimer ce bien ? Cette action est <strong>irréversible</strong>.</p>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="d-flex justify-content-end">
+          <a href="{% url 'biens:bien_list' %}" class="btn btn-secondary me-2">❌ Annuler</a>
+          <button type="submit" class="btn btn-danger">✅ Supprimer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

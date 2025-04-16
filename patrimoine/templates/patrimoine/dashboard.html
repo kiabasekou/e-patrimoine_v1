@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1>📊 Tableau de bord</h1>
+
+<h2>💰 Valeur totale du patrimoine : {{ valeur_totale|floatformat:"0" }} FCFA</h2>
+
+<h3>📦 Répartition par catégorie :</h3>
+<ul>
+    {% for cat in par_categorie %}
+        <li>
+            {{ cat.categorie__nom }} : {{ cat.nb_biens }} biens – 
+            {{ cat.total|floatformat:"0" }} FCFA
+        </li>
+    {% empty %}
+        <li>Aucune donnée</li>
+    {% endfor %}
+</ul>
+
+<h3>🏢 Répartition par entité :</h3>
+<ul>
+    {% for ent in par_entite %}
+        <li>
+            {{ ent.entite__nom }} : {{ ent.nb_biens }} biens – 
+            {{ ent.total|floatformat:"0" }} FCFA
+        </li>
+    {% empty %}
+        <li>Aucune donnée</li>
+    {% endfor %}
+</ul>
+{% endblock %}
