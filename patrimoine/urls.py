@@ -12,7 +12,7 @@ urlpatterns = [
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
 
     # Vues AJAX
-    path('ajax/get-profil-form/', views.get_profil_form, name='get_profil_form'),  # 👈 important
+    path('ajax/get-profil-form/', views.get_profil_form, name='get_profil_form'),  # 👈 Important
     path('ajax/load-sous-categories/', views.load_sous_categories, name='ajax_load_sous_categories'),
 
     # Vue combinée

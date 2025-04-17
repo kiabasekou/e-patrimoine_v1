@@ -1,32 +1,184 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+
+{% block title %}Tableau de bord{% endblock %}
 
 {% block content %}
-<h1>📊 Tableau de bord</h1>
+  <div class="container mt-4">
+    <h1>📊 Tableau de bord</h1>
 
-<h2>💰 Valeur totale du patrimoine : {{ valeur_totale|floatformat:"0" }} FCFA</h2>
+    <div class="d-flex justify-content-end mb-3">
+      <a href="{% url 'biens:dashboard' %}?format=excel" class="btn btn-success me-2">📥 Export Excel</a>
+      <a href="{% url 'biens:dashboard' %}?format=pdf" class="btn btn-danger">🖨️ Export PDF</a>
+    </div>
 
-<h3>📦 Répartition par catégorie :</h3>
-<ul>
-    {% for cat in par_categorie %}
-        <li>
-            {{ cat.categorie__nom }} : {{ cat.nb_biens }} biens – 
-            {{ cat.total|floatformat:"0" }} FCFA
-        </li>
-    {% empty %}
-        <li>Aucune donnée</li>
-    {% endfor %}
-</ul>
+    <form method="get" class="row g-3 align-items-end mb-4">
+      <div class="col-md-4">
+        <label for="annee" class="form-label">Filtrer par année</label>
+        <select name="annee" id="annee" class="form-select">
+          <option value="">-- Toutes les années --</option>
+          {% for an in annees_disponibles %}
+            <option value="{{ an }}" {% if an|stringformat:"s" == annee %}selected{% endif %}>{{ an }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="province" class="form-label">Filtrer par province</label>
+        <select name="province" id="province" class="form-select">
+          <option value="">-- Toutes les provinces --</option>
+          {% for p in provinces %}
+            <option value="{{ p.id }}" {% if p.id|stringformat:"s" == province %}selected{% endif %}>{{ p.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+        <a href="{% url 'biens:dashboard' %}" class="btn btn-outline-secondary">♻️ Réinitialiser</a>
+      </div>
+    </form>
 
-<h3>🏢 Répartition par entité :</h3>
-<ul>
-    {% for ent in par_entite %}
-        <li>
-            {{ ent.entite__nom }} : {{ ent.nb_biens }} biens – 
-            {{ ent.total|floatformat:"0" }} FCFA
-        </li>
-    {% empty %}
-        <li>Aucune donnée</li>
-    {% endfor %}
-</ul>
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">💰 Valeur totale du patrimoine</h5>
+        <p class="card-text">{{ valeur_totale|floatformat:"0" }} FCFA</p>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Répartition des biens par catégorie</h5>
+        {% if par_categorie %}
+          <ul class="list-group list-group-flush">
+            {% for cat in par_categorie %}
+              <li class="list-group-item">
+                {{ cat.categorie__nom }} : <span class="badge bg-primary">{{ cat.nb_biens }} biens</span> –
+                <span class="badge bg-success">{{ cat.total|floatformat:"0" }} FCFA</span>
+              </li>
+            {% endfor %}
+          </ul>
+          <canvas id="categorieChart" class="mt-4" height="100"></canvas>
+        {% else %}
+          <p class="text-muted">Aucune donnée de répartition par catégorie.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Répartition par entité</h5>
+        {% if par_entite %}
+          <ul class="list-group list-group-flush">
+            {% for ent in par_entite %}
+              <li class="list-group-item">
+                {{ ent.entite__nom }} : <span class="badge bg-info">{{ ent.nb_biens }} biens</span> –
+                <span class="badge bg-warning">{{ ent.total|floatformat:"0" }} FCFA</span>
+              </li>
+            {% endfor %}
+          </ul>
+          <canvas id="entiteChart" class="mt-4" height="100"></canvas>
+        {% else %}
+          <p class="text-muted">Aucune donnée de répartition par entité.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Répartition par province</h5>
+        {% if par_province %}
+          <ul class="list-group list-group-flush">
+            {% for prov in par_province %}
+              <li class="list-group-item">
+                {{ prov.province__nom }} : <span class="badge bg-secondary">{{ prov.nb_biens }} biens</span> –
+                <span class="badge bg-dark">{{ prov.total|floatformat:"0" }} FCFA</span>
+              </li>
+            {% endfor %}
+          </ul>
+          <canvas id="provinceChart" class="mt-4" height="100"></canvas>
+        {% else %}
+          <p class="text-muted">Aucune donnée de répartition par province.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="alert alert-info mt-3" role="alert">
+      Ceci est un aperçu de votre tableau de bord. Des visualisations plus détaillées pourraient être ajoutées ici.
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const catLabels = {{ categorie_labels|safe }};
+  const catData = {{ categorie_data|safe }};
+  const entLabels = {{ entite_labels|safe }};
+  const entData = {{ entite_data|safe }};
+  const provLabels = {{ province_labels|safe }};
+  const provData = {{ province_data|safe }};
+
+  const ctxCat = document.getElementById('categorieChart');
+  if (ctxCat) {
+    new Chart(ctxCat, {
+      type: 'bar',
+      data: {
+        labels: catLabels,
+        datasets: [{
+          label: 'Nombre de biens par catégorie',
+          data: catData,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  const ctxEnt = document.getElementById('entiteChart');
+  if (ctxEnt) {
+    new Chart(ctxEnt, {
+      type: 'pie',
+      data: {
+        labels: entLabels,
+        datasets: [{
+          label: 'Répartition par entité',
+          data: entData,
+          backgroundColor: [
+            '#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14'
+          ]
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+  }
+
+  const ctxProv = document.getElementById('provinceChart');
+  if (ctxProv) {
+    new Chart(ctxProv, {
+      type: 'doughnut',
+      data: {
+        labels: provLabels,
+        datasets: [{
+          label: 'Répartition par province',
+          data: provData,
+          backgroundColor: [
+            '#6f42c1', '#20c997', '#0dcaf0', '#ffc107', '#dc3545', '#198754', '#6610f2', '#fd7e14', '#0d6efd'
+          ]
+        }]
+      },
+      options: {
+        responsive: true
+      }
+    });
+  }
+</script>
 {% endblock %}

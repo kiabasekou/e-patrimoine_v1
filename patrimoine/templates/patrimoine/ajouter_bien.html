@@ -3,16 +3,134 @@
 
 {% block content %}
   <h2>Ajouter un Bien</h2>
-  <form method="post">
+
+  <!-- ✅ Barre de progression -->
+  <div id="progressbar" style="margin-bottom: 20px;">
+    <div style="width: 100%; background-color: #e0e0e0; height: 8px; border-radius: 4px;">
+      <div id="progress" style="width: 33%; height: 8px; background-color: #007bff; border-radius: 4px;"></div>
+    </div>
+    <div style="font-size: 0.9em; text-align: right;">Etape 1 sur 3 : Informations générales</div>
+  </div>
+
+  <!-- ✅ Formulaire principal -->
+  <form method="post" id="bien-form">
     {% csrf_token %}
     {{ bien_form.as_p }}
-    
-    {% if profil_form %}
-      <h4>Profil technique spécifique :</h4>
-      {{ profil_form.as_p }}
-    {% endif %}
 
+    <!-- ✅ Formulaire technique chargé dynamiquement -->
+    <div id="profil-form-container">
+      {% if profil_form %}
+        <h4>Profil technique spécifique :</h4>
+        {{ profil_form.as_p }}
+      {% endif %}
+    </div>
+
+    <!-- ✅ Boutons -->
+    <button type="button" onclick="showPreview()">Prévisualiser</button>
     <button type="submit">Enregistrer</button>
   </form>
+
+  <div id="message" style="margin-top: 15px;"></div>
+
+  <!-- ✅ Aperçu du bien -->
+  <div id="preview" style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background-color: #f9f9f9; display: none;"></div>
+
+  <!-- ✅ Script JS AJAX + Preview + Progress -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const catField = document.getElementById('id_categorie');
+      const sousCatField = document.getElementById('id_sous_categorie');
+
+      if (catField) {
+        catField.addEventListener('change', function () {
+          const catId = this.value;
+
+          fetch("{% url 'biens:ajax_load_sous_categories' %}?categorie=" + catId)
+            .then(response => {
+              if (!response.ok) throw new Error("Erreur AJAX");
+              return response.text();
+            })
+            .then(html => {
+              sousCatField.innerHTML = html;
+              document.getElementById('profil-form-container').innerHTML = '';
+              updateProgress(33);
+            })
+            .catch(err => {
+              alert("Erreur lors du chargement des sous-catégories");
+              console.error(err);
+            });
+        });
+      }
+
+      if (sousCatField) {
+        sousCatField.addEventListener('change', function () {
+          const sousCategorieId = this.value;
+          fetch("{% url 'biens:get_profil_form' %}?sous_categorie_id=" + sousCategorieId)
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('profil-form-container').innerHTML = data.form || '';
+              updateProgress(66);
+            });
+        });
+      }
+
+      document.getElementById('bien-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+
+        fetch("{% url 'biens:ajouter_bien_complet' %}", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+          }
+        })
+          .then(response => response.json())
+          .then(data => {
+            const msg = document.getElementById("message");
+
+            if (data.success) {
+              msg.innerHTML = `<div style="color: green;">✅ Bien enregistré avec succès !</div>`;
+              form.reset();
+              document.getElementById("profil-form-container").innerHTML = '';
+              document.getElementById("preview").style.display = 'none';
+              updateProgress(33);
+            } else if (data.errors) {
+              msg.innerHTML = `<div style="color: red;">❌ Erreurs détectées. Veuillez vérifier les champs obligatoires.</div>`;
+            }
+          })
+          .catch(error => {
+            document.getElementById("message").innerHTML = `<div style="color: red;">Erreur : ${error.message}</div>`;
+          });
+      });
+    });
+
+    // --- Prévisualisation du bien ---
+    function showPreview() {
+      const nom = document.getElementById("id_nom").value;
+      const valeur = document.getElementById("id_valeur_initiale").value;
+      const date = document.getElementById("id_date_acquisition").value;
+      const entite = document.getElementById("id_entite").options[document.getElementById("id_entite").selectedIndex].text;
+      const categorie = document.getElementById("id_categorie").options[document.getElementById("id_categorie").selectedIndex].text;
+
+      document.getElementById("preview").style.display = 'block';
+      document.getElementById("preview").innerHTML = `
+        <h4>Aperçu du Bien</h4>
+        <p><strong>Nom :</strong> ${nom}</p>
+        <p><strong>Valeur :</strong> ${valeur} FCFA</p>
+        <p><strong>Date d'acquisition :</strong> ${date}</p>
+        <p><strong>Catégorie :</strong> ${categorie}</p>
+        <p><strong>Entité :</strong> ${entite}</p>
+      `;
+
+      updateProgress(100);
+    }
+
+    // --- Barre de progression ---
+    function updateProgress(percentage) {
+      document.getElementById("progress").style.width = percentage + "%";
+    }
+  </script>
 {% endblock %}
-*

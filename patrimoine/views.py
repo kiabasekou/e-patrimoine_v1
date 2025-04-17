@@ -4,6 +4,14 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.views.generic import ListView, CreateView, TemplateView, DetailView, UpdateView, DeleteView
 from django.urls import reverse_lazy
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.core.serializers.json import DjangoJSONEncoder
+import openpyxl
+from openpyxl.utils import get_column_letter
+import json
+from django.db.models.functions import ExtractYear
+from patrimoine.models import Bien, Province
 
 from .models import Bien, Categorie, SousCategorie, Entite, HistoriqueValeur
 from .forms import (
@@ -41,15 +49,86 @@ class BienDeleteView(DeleteView):
     success_url = reverse_lazy('biens:bien_list')
 
 
+
+
+
 class DashboardView(TemplateView):
     template_name = 'patrimoine/dashboard.html'
 
     def get_context_data(self, **kwargs):
+        if self.request.GET.get('format') == 'excel':
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Tableau de bord"
+
+            ws.append(['Catégorie', 'Nombre de biens', 'Valeur totale (FCFA)'])
+            par_cat = Bien.objects.values('categorie__nom').annotate(
+                nb_biens=Count('id'), total=Sum('valeur_initiale')
+            )
+            for cat in par_cat:
+                ws.append([
+                    cat['categorie__nom'],
+                    cat['nb_biens'],
+                    float(cat['total'] or 0)
+                ])
+
+            # Largeur des colonnes
+            for col in range(1, 4):
+                ws.column_dimensions[get_column_letter(col)].width = 25
+
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = 'attachment; filename=dashboard_export.xlsx'
+            wb.save(response)
+            return response
+
         context = super().get_context_data(**kwargs)
-        context['valeur_totale'] = Bien.objects.aggregate(Sum('valeur_initiale'))['valeur_initiale__sum'] or 0
-        context['par_categorie'] = Bien.objects.values('categorie__nom').annotate(nb_biens=Count('id'), total=Sum('valeur_initiale')).order_by('-nb_biens')
-        context['par_entite'] = Bien.objects.values('entite__nom').annotate(nb_biens=Count('id'), total=Sum('valeur_initiale')).order_by('-nb_biens')
+
+        annee = self.request.GET.get('annee')
+        province_id = self.request.GET.get('province')
+
+        biens = Bien.objects.all()
+
+        if annee:
+            biens = biens.filter(date_acquisition__year=annee)
+        if province_id:
+            biens = biens.filter(entite__commune__departement__province__id=province_id)
+
+        context['valeur_totale'] = biens.aggregate(Sum('valeur_initiale'))['valeur_initiale__sum'] or 0
+
+        par_cat = biens.values('categorie__nom').annotate(nb_biens=Count('id'), total=Sum('valeur_initiale'))
+        par_entite = biens.values('entite__nom').annotate(nb_biens=Count('id'), total=Sum('valeur_initiale'))
+        par_province = biens.values('entite__commune__departement__province__nom').annotate(nb_biens=Count('id'), total=Sum('valeur_initiale'))
+
+        context['par_categorie'] = par_cat
+        context['par_entite'] = par_entite
+        context['par_province'] = par_province
+
+        context['categorie_labels'] = json.dumps([e['categorie__nom'] for e in par_cat], cls=DjangoJSONEncoder)
+        context['categorie_data'] = json.dumps([e['nb_biens'] for e in par_cat], cls=DjangoJSONEncoder)
+
+        context['entite_labels'] = json.dumps([e['entite__nom'] for e in par_entite], cls=DjangoJSONEncoder)
+        context['entite_data'] = json.dumps([e['nb_biens'] for e in par_entite], cls=DjangoJSONEncoder)
+
+        context['province_labels'] = json.dumps([e['entite__commune__departement__province__nom'] for e in par_province], cls=DjangoJSONEncoder)
+        context['province_data'] = json.dumps([e['nb_biens'] for e in par_province], cls=DjangoJSONEncoder)
+
+        context['annee'] = annee
+        context['province'] = province_id
+
+        context['annees_disponibles'] = (
+            Bien.objects
+            .annotate(annee=ExtractYear('date_acquisition'))
+            .values_list('annee', flat=True)
+            .distinct()
+            .order_by('-annee')
+        )
+
+        context['provinces'] = Province.objects.all()
+
         return context
+
 
 
 class BienDetailView(DetailView):
@@ -82,41 +161,56 @@ def load_sous_categories(request):
     return HttpResponse(render_to_string('patrimoine/sous_categorie_dropdown_list.html', {'sous_categories': sous_categories}))
 
 
+
+
+@csrf_exempt
 def ajouter_bien(request):
     bien_form = BienForm(request.POST or None)
     profil_form = None
 
-    if request.method == 'POST' and bien_form.is_valid():
-        bien = bien_form.save(commit=False)
-        sous_categorie = bien_form.cleaned_data['sous_categorie']
-        code = sous_categorie.code  # 👈 usage du code plutôt que nom
+    if request.method == 'POST':
+        if bien_form.is_valid():
+            bien = bien_form.save(commit=False)
+            sous_categorie = bien_form.cleaned_data['sous_categorie']
+            code = sous_categorie.code
 
-        form_classes = {
-            'ambulance': ProfilVehiculeForm,
-            'vehicule_service': ProfilVehiculeForm,
-            'batiment_admin': ProfilImmeubleForm,
-            'infra_sante': ProfilImmeubleForm,
-            'serveur': ProfilInformatiqueForm,
-            'ordinateur': ProfilInformatiqueForm,
-            'scanner_medical': ProfilEquipementMedicalForm,
-            'appareil_imagerie': ProfilEquipementMedicalForm,
-            'centrifugeuse': ProfilEquipementMedicalForm,
-        }
+            form_classes = {
+                'ambulance': ProfilVehiculeForm,
+                'vehicule_service': ProfilVehiculeForm,
+                'batiment_admin': ProfilImmeubleForm,
+                'infra_sante': ProfilImmeubleForm,
+                'serveur': ProfilInformatiqueForm,
+                'ordinateur': ProfilInformatiqueForm,
+                'scanner_medical': ProfilEquipementMedicalForm,
+                'appareil_imagerie': ProfilEquipementMedicalForm,
+                'centrifugeuse': ProfilEquipementMedicalForm,
+            }
 
-        profil_class = form_classes.get(code)
-        if profil_class:
-            profil_form = profil_class(request.POST)
-            if profil_form.is_valid():
+            profil_class = form_classes.get(code)
+            profil_form = profil_class(request.POST) if profil_class else None
+
+            if not profil_class or (profil_form and profil_form.is_valid()):
                 bien.save()
-                profil = profil_form.save(commit=False)
-                profil.bien = bien
-                profil.save()
+                if profil_form:
+                    profil = profil_form.save(commit=False)
+                    profil.bien = bien
+                    profil.save()
+
+                # ✅ Réponse AJAX
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': True})
+
                 return redirect('biens:bien_detail', pk=bien.pk)
+
+        # En cas d'erreurs :
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': bien_form.errors if bien_form.errors else profil_form.errors if profil_form else None})
 
     return render(request, 'patrimoine/ajouter_bien.html', {
         'bien_form': bien_form,
         'profil_form': profil_form
     })
+
 
 def get_profil_form(request):
     sous_categorie_id = request.GET.get('sous_categorie_id')

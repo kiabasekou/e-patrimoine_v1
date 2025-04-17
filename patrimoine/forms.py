@@ -23,6 +23,8 @@ class HistoriqueValeurForm(forms.ModelForm):
 
 
 
+from .models import SousCategorie
+
 class BienForm(forms.ModelForm):
     class Meta:
         model = Bien
@@ -31,6 +33,10 @@ class BienForm(forms.ModelForm):
             'valeur_initiale', 'date_acquisition',
             'entite'
         ]
+        widgets = {
+            'sous_categorie': forms.Select(attrs={'id': 'id_sous_categorie'}),
+            'categorie': forms.Select(attrs={'id': 'id_categorie'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
