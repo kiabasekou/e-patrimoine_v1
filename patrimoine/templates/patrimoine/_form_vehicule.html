@@ -1,0 +1,23 @@
+<div class="card mt-4">
+  <div class="card-header bg-dark text-white">🚗 Profil Véhicule de service</div>
+  <div class="card-body">
+    {% if profil_form %}
+      {% for field in profil_form.visible_fields %}
+        <div class="mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+            <small class="form-text text-muted">{{ field.help_text }}</small>
+          {% endif %}
+          {% for error in field.errors %}
+            <div class="text-danger small">{{ error }}</div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="alert alert-info">
+        Ce bien ne dispose pas de profil de véhicule structuré.
+      </div>
+    {% endif %}
+  </div>
+</div>

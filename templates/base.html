@@ -1,67 +1,130 @@
+{% load static i18n %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Gestion du Patrimoine{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Gestion du Patrimoine{% endblock title %}</title>
 
-    <!-- ✅ Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap 5 depuis CDN -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+    rel="stylesheet"
 
-    <style>
-        body {
-            padding-top: 60px;
-        }
-        .navbar-brand {
-            font-weight: bold;
-        }
-        .content-wrapper {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-        }
-    </style>
+  >
+  <!-- CSS custom si besoin -->
+  <link href="{% static 'css/custom.css' %}" rel="stylesheet">
 
-    {% block extra_css %}{% endblock %}
+  {% block extra_css %}
+  <!-- Leaflet CSS sans integrity -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  >
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+  />
+{% endblock extra_css %}
+
+
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 
-    <!-- ✅ Barre de navigation Bootstrap -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'biens:bien_list' %}">🏩️ Patrimoine</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Afficher le menu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'biens:bien_list' %}">🏠 Accueil</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'biens:ajouter_bien_complet' %}">➕ Ajouter un bien</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'biens:dashboard' %}">📊 Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/">⚙️ Admin</a>
-                    </li>
-                </ul>
-            </div>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{% url 'biens:bien_list' %}">
+        🏛️ Patrimoine
+      </a>
+      <button 
+        class="navbar-toggler" 
+        type="button" 
+        data-bs-toggle="collapse" 
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav" 
+        aria-expanded="false" 
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'biens:bien_list' %}">
+              📋 Liste
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'biens:bien_create' %}">
+              ➕ Ajouter
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'biens:dashboard' %}">
+              📊 Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'biens:carte' %}">
+              🌐 Carte
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Messages Django -->
+  <div class="container mt-3">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
         </div>
-    </nav>
+      {% endfor %}
+    {% endif %}
+  </div>
 
-    <!-- ✅ Zone de contenu -->
-    <main class="content-wrapper">
-        {% block content %}
-        <!-- Le contenu spécifique de chaque page -->
-        {% endblock %}
-    </main>
+  <!-- Contenu principal -->
+  <main class="flex-fill">
+    {% block content %}{% endblock content %}
+  </main>
 
-    <!-- ✅ Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    {% block extra_js %}{% endblock %}
+  <!-- Footer -->
+  <footer class="bg-light text-center text-muted py-3 mt-auto border-top">
+    <div class="container">
+      &copy; {{ now|date:"Y" }} Gestion du Patrimoine &middot;
+      <a href="https://github.com/ton-repo" target="_blank" class="text-decoration-none">
+        GitHub
+      </a>
+    </div>
+  </footer>
 
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  {% block extra_js %}
+  <!-- Leaflet JS sans integrity -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <!-- Votre code d'initialisation -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // ...
+    });
+  </script>
+{% endblock extra_js %}
 </body>
 </html>

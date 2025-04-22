@@ -1,0 +1,17 @@
+{% if profil_form %}
+    <div class="row">
+        {% for field in profil_form.visible_fields %}
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+                    {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <p class="form-text">Données utiles pour le suivi des consommables stratégiques.</p>
+{% else %}
+    <div class="alert alert-info">Ce bien ne dispose pas de profil de consommables structuré.</div>
+{% endif %}

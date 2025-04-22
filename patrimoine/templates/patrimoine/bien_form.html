@@ -1,91 +1,90 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Détail du Bien | Gestion du Patrimoine{% endblock %}
+{% block title %}
+  {% if view.kwargs.pk %}Modifier « {{ object.nom }} »{% else %}Ajouter un nouveau bien{% endif %} | Gestion du Patrimoine
+{% endblock title %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-info text-white">
-            <h4 class="mb-0">🔎 Détail du bien : {{ bien.nom }}</h4>
-        </div>
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-4">Catégorie</dt>
-                <dd class="col-sm-8">{{ bien.categorie.nom }}</dd>
-
-                <dt class="col-sm-4">Sous-catégorie</dt>
-                <dd class="col-sm-8">{{ bien.sous_categorie.nom }}</dd>
-
-                <dt class="col-sm-4">Entité affectée</dt>
-                <dd class="col-sm-8">{{ bien.entite.nom }}</dd>
-
-                <dt class="col-sm-4">Valeur initiale</dt>
-                <dd class="col-sm-8">{{ bien.valeur_initiale|floatformat:"0" }} FCFA</dd>
-
-                <dt class="col-sm-4">Date d'acquisition</dt>
-                <dd class="col-sm-8">{{ bien.date_acquisition }}</dd>
-
-                <dt class="col-sm-4">Valeur actuelle estimée</dt>
-                <dd class="col-sm-8">{{ bien.valeur_actuelle|default:"Non calculée" }} FCFA</dd>
-            </dl>
-
-            {% if bien.profil_vehicule or bien.profil_immeuble or bien.profil_informatique or bien.profil_equipement_medical %}
-            <hr>
-            <h5 class="text-muted">Profil technique</h5>
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm">
-                    <tbody>
-                        {% if bien.profil_vehicule %}
-                            <tr><th>Marque</th><td>{{ bien.profil_vehicule.marque }}</td></tr>
-                            <tr><th>Modèle</th><td>{{ bien.profil_vehicule.modele }}</td></tr>
-                            <tr><th>Immatriculation</th><td>{{ bien.profil_vehicule.immatriculation }}</td></tr>
-                            <tr><th>Puissance</th><td>{{ bien.profil_vehicule.puissance }}</td></tr>
-                            <tr><th>Assurance</th><td>{{ bien.profil_vehicule.assurance }}</td></tr>
-                        {% elif bien.profil_immeuble %}
-                            <tr><th>Surface</th><td>{{ bien.profil_immeuble.surface }} m²</td></tr>
-                            <tr><th>Étages</th><td>{{ bien.profil_immeuble.nb_etages }}</td></tr>
-                            <tr><th>Année</th><td>{{ bien.profil_immeuble.annee_construction }}</td></tr>
-                            <tr><th>Sécurité</th><td>{{ bien.profil_immeuble.securite }}</td></tr>
-                        {% elif bien.profil_informatique %}
-                            <tr><th>Type</th><td>{{ bien.profil_informatique.get_type_equipement_display }}</td></tr>
-                            <tr><th>Marque</th><td>{{ bien.profil_informatique.marque }}</td></tr>
-                            <tr><th>OS</th><td>{{ bien.profil_informatique.os }} {{ bien.profil_informatique.version_os }}</td></tr>
-                            <tr><th>Adresse IP</th><td>{{ bien.profil_informatique.adresse_ip }}</td></tr>
-                        {% elif bien.profil_equipement_medical %}
-                            <tr><th>Type</th><td>{{ bien.profil_equipement_medical.get_type_equipement_display }}</td></tr>
-                            <tr><th>Marque</th><td>{{ bien.profil_equipement_medical.marque }}</td></tr>
-                            <tr><th>Certification</th><td>{{ bien.profil_equipement_medical.certification }}</td></tr>
-                            <tr><th>Classe de risque</th><td>{{ bien.profil_equipement_medical.get_classe_risque_display }}</td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
-            {% endif %}
-
-            <hr>
-            <h5 class="text-muted">Historique des valeurs</h5>
-            {% if historiques %}
-                <ul class="list-group">
-                    {% for h in historiques %}
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>{{ h.date }}</span>
-                            <strong>{{ h.valeur|floatformat:"0" }} FCFA</strong>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <div class="alert alert-warning mt-3">Aucun historique de valeur enregistré.</div>
-            {% endif %}
-
-            <hr>
-            <h5 class="text-muted">Ajouter une nouvelle estimation</h5>
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-outline-primary">💾 Ajouter</button>
-            </form>
-        </div>
+  <h1>
+    {% if view.kwargs.pk %}✏️ Modifier« {{ object.nom }} »{% else %}➕ Ajouter un nouveau bien{% endif %}
+  </h1>
+  <form method="post" enctype="multipart/form-data" id="bien-form">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label for="id_nom" class="form-label">Nom</label>
+        {{ form.nom }}
+        {% for err in form.nom.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="col-md-6">
+        <label for="id_entite" class="form-label">Entité</label>
+        {{ form.entite }}
+        {% for err in form.entite.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="col-md-6">
+        <label for="id_categorie" class="form-label">Catégorie</label>
+        {{ form.categorie }}
+        {% for err in form.categorie.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="col-md-6">
+        <label for="id_sous_categorie" class="form-label">Sous‑catégorie</label>
+        {{ form.sous_categorie }}
+        {% for err in form.sous_categorie.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="col-md-4">
+        <label for="id_valeur_initiale" class="form-label">Valeur initiale</label>
+        {{ form.valeur_initiale }}
+        {% for err in form.valeur_initiale.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="col-md-4">
+        <label for="id_date_acquisition" class="form-label">Date d’acquisition</label>
+        {{ form.date_acquisition }}
+        {% for err in form.date_acquisition.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
+      <div class="col-md-4">
+        <label for="id_justificatif" class="form-label">Justificatif</label>
+        {{ form.justificatif }}
+        {% for err in form.justificatif.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+      </div>
     </div>
+
+    <div id="profil-form-container" class="mt-4"></div>
+
+    <div class="mt-3 d-flex justify-content-end gap-2">
+      <a href="{% url 'biens:bien_list' %}" class="btn btn-secondary">Annuler</a>
+      <button type="submit" class="btn btn-success">
+        {% if view.kwargs.pk %}💾 Enregistrer{% else %}✔️ Créer{% endif %}
+      </button>
+    </div>
+  </form>
 </div>
-{% endblock %}
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const cat = document.getElementById('id_categorie');
+  const sous = document.getElementById('id_sous_categorie');
+  const profilContainer = document.getElementById('profil-form-container');
+
+  cat?.addEventListener('change', () => {
+    fetch("{% url 'biens:ajax_load_sous_categories' %}?categorie=" + cat.value)
+      .then(r => r.text())
+      .then(html => {
+        sous.innerHTML = html;
+        profilContainer.innerHTML = '';
+      })
+      .catch(console.error);
+  });
+
+  sous?.addEventListener('change', () => {
+    if (!sous.value) return;
+    fetch("{% url 'biens:get_profil_form' %}?sous_categorie_id=" + sous.value)
+      .then(r => r.json())
+      .then(data => profilContainer.innerHTML = data.form || '')
+      .catch(console.error);
+  });
+});
+</script>
+{% endblock extra_js %}

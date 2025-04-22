@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Carte des biens | Gestion du Patrimoine{% endblock title %}
+
+{% block content %}
+<div class="container py-4">
+  <h1>🌐 Répartition géographique des biens</h1>
+  <p class="text-muted">Cliquez sur un cercle pour voir le détail par province.</p>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="filtreCategorie" class="form-label">Filtrer par catégorie :</label>
+      <select id="filtreCategorie" class="form-select">
+        <option value="">Toutes les catégories</option>
+        {% for cat in categories %}
+          <option value="{{ cat }}">{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <label for="filtreAnnee" class="form-label">Filtrer par année :</label>
+      <select id="filtreAnnee" class="form-select">
+        <option value="">Toutes les années</option>
+        {% for an in annees %}
+          <option value="{{ an }}">{{ an }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div id="loader" class="text-center my-5" style="display:none;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement…</span>
+    </div>
+  </div>
+
+  <div id="map" style="height: 600px; width: 100%;" class="mt-4"></div>
+</div>
+{% endblock content %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+{% endblock extra_css %}
+
+{% block extra_js %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const loader = document.getElementById('loader');
+  const mapEl = document.getElementById('map');
+  const filterCat = document.getElementById('filtreCategorie');
+  const filterYear = document.getElementById('filtreAnnee');
+  const data = {{ carte_data|safe }};
+
+  // Initialisation de la carte
+  const map = L.map(mapEl).setView([0.3901, 9.4544], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Groupe de clusters
+  const markers = L.markerClusterGroup();
+
+  function renderMarkers(cat, year) {
+    loader.style.display = 'block';
+    markers.clearLayers();
+
+    data.forEach(p => {
+      if ((!cat || p.categorie === cat) && (!year || p.annee === +year)) {
+        const circle = L.circleMarker([p.latitude, p.longitude], {
+          radius: Math.min(8 + p.nb_biens, 25),
+          fillColor: '#007bff',
+          color: '#0056b3',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.6
+        }).bindPopup(`
+          <strong>${p.province_nom}</strong><br>
+          ${p.nb_biens} bien(s)<br>
+          Valeur totale : ${Number(p.total).toLocaleString()} FCFA
+        `);
+
+        circle.on('mouseover', () => circle.setStyle({
+          fillColor: '#ff8800',
+          color: '#cc6600'
+        }));
+        circle.on('mouseout', () => circle.setStyle({
+          fillColor: '#007bff',
+          color: '#0056b3'
+        }));
+
+        markers.addLayer(circle);
+      }
+    });
+
+    map.addLayer(markers);
+    loader.style.display = 'none';
+  }
+
+  filterCat.addEventListener('change', () =>
+    renderMarkers(filterCat.value, filterYear.value)
+  );
+  filterYear.addEventListener('change', () =>
+    renderMarkers(filterCat.value, filterYear.value)
+  );
+
+  // Affichage initial
+  renderMarkers('', '');
+});
+</script>
+{% endblock extra_js %}

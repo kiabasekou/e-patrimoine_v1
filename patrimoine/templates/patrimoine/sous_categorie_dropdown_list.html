@@ -1,7 +1,4 @@
-
-
-
-<option value="">---- Sélectionner une sous-catégorie ----</option>
-{% for sous_categorie in sous_categories %}
-  <option value="{{ sous_categorie.id }}">{{ sous_categorie.nom }}</option>
+<option value="">---------</option>
+{% for sc in sous_categories %}
+  <option value="{{ sc.id }}">{{ sc.nom }}</option>
 {% endfor %}

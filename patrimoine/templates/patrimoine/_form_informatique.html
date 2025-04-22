@@ -1,0 +1,15 @@
+<div class="card mt-4">
+  <div class="card-header bg-primary text-white">🖥️ Profil Matériel Informatique</div>
+  <div class="card-body">
+      {% for field in profil_form.visible_fields %}
+          <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+              {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+      {% empty %}
+          <div class="alert alert-info">Aucun champ de profil spécifique pour le matériel informatique.</div>
+      {% endfor %}
+  </div>
+</div>
