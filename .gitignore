@@ -1,15 +1,36 @@
-# Django
+# Environnement Python
 *.pyc
+*.pyo
 __pycache__/
-db.sqlite3
-.env
+env/
+venv/
+ENV/
+.venv/
+.Python
 
-# Node, SASS compilé
-node_modules/
+# Django
+db.sqlite3
+/media/
+staticfiles/
 static/css/
 static/scss/
-staticfiles/
 
-# IDE
+# Fichiers de config sensibles
+*.env
+*.env.local
+*.env.prod
+
+# Node.js / Frontend
+node_modules/
+npm-debug.log
+yarn-error.log
+build/
+
+# Visual Studio Code
 .vscode/
+
+# PyCharm
 .idea/
+
+# Git
+.git/
