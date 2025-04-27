@@ -6,7 +6,7 @@ from django.views.generic import ListView, CreateView, DetailView, UpdateView, D
 from django.urls import reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Bien, Categorie, SousCategorie, Entite, HistoriqueValeur, Province
+from .models import Bien, Categorie, SousCategorie, Entite, HistoriqueValeur, Province, Commune
 from .forms import (
     BienForm,
     HistoriqueValeurForm,
@@ -23,6 +23,16 @@ from collections import defaultdict
 import openpyxl
 from openpyxl.utils import get_column_letter
 from django.db.models.functions import ExtractYear
+from django.utils.timezone import now
+
+
+
+def accueil_view(request):
+    context = {
+        "now": now()  # pour afficher l'année dans le footer
+    }
+    return render(request, "home.html", context)
+
 
 # --- Mapping centralisé code -> (FormClass, template) ---
 # Mapping unifié basé sur vos codes en base
@@ -109,27 +119,34 @@ class BienDetailView(DetailView, DetailViewMixin):
         return self.render_to_response(context)
 
 
+
 class DashboardView(TemplateView):
     template_name = 'patrimoine/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Export Excel
         if self.request.GET.get('format') == 'excel':
-            workbook = openpyxl.Workbook()
+            workbook = Workbook()
             worksheet = workbook.active
             worksheet.title = "Tableau de bord"
             worksheet.append(['Catégorie', 'Nombre de biens', 'Valeur totale (FCFA)'])
+
             biens_par_categorie = Bien.objects.values('categorie__nom').annotate(
                 nb_biens=Count('id'), total=Sum('valeur_initiale')
             )
+
             for category_data in biens_par_categorie:
                 worksheet.append([
                     category_data['categorie__nom'],
                     category_data['nb_biens'],
                     float(category_data['total'] or 0),
                 ])
+
             for col_idx in range(1, 4):
                 worksheet.column_dimensions[get_column_letter(col_idx)].width = 25
+
             response = HttpResponse(
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
@@ -137,34 +154,34 @@ class DashboardView(TemplateView):
             workbook.save(response)
             return response
 
-        all_biens = Bien.objects.all()
+        # Filtres
+        all_biens = Bien.objects.select_related('commune', 'categorie', 'entite')
         selected_year = self.request.GET.get('annee')
-        selected_province = self.request.GET.get('province')
+        selected_commune = self.request.GET.get('commune')
 
         if selected_year:
             all_biens = all_biens.filter(date_acquisition__year=selected_year)
-        if selected_province:
-            all_biens = all_biens.filter(entite__commune__departement__province__id=selected_province)
+        if selected_commune:
+            all_biens = all_biens.filter(commune__id=selected_commune)
 
-        context.update(
-            {
-                'valeur_totale': all_biens.aggregate(Sum('valeur_initiale'))['valeur_initiale__sum'] or 0,
-                'par_categorie': all_biens.values('categorie__nom').annotate(
-                    nb_biens=Count('id'), total=Sum('valeur_initiale')
-                ),
-                'par_entite': all_biens.values('entite__nom').annotate(
-                    nb_biens=Count('id'), total=Sum('valeur_initiale')
-                ),
-                'par_province': all_biens.values('entite__commune__departement__province__nom').annotate(
-                    nb_biens=Count('id'), total=Sum('valeur_initiale')
-                ),
-                'annees_disponibles': Bien.objects.annotate(annee=ExtractYear('date_acquisition'))
+        context.update({
+            'valeur_totale': all_biens.aggregate(Sum('valeur_initiale'))['valeur_initiale__sum'] or 0,
+            'par_categorie': all_biens.values('categorie__nom').annotate(
+                nb_biens=Count('id'), total=Sum('valeur_initiale')
+            ),
+            'par_entite': all_biens.values('entite__nom').annotate(
+                nb_biens=Count('id'), total=Sum('valeur_initiale')
+            ),
+            'par_commune': all_biens.values('commune__nom').annotate(
+                nb_biens=Count('id'), total=Sum('valeur_initiale')
+            ),
+            'annees_disponibles': Bien.objects.annotate(annee=ExtractYear('date_acquisition'))
                 .values_list('annee', flat=True)
                 .distinct()
                 .order_by('-annee'),
-                'provinces': Province.objects.all(),
-            }
-        )
+            'communes': Commune.objects.all(),
+        })
+
         return context
 
 
@@ -223,45 +240,45 @@ def load_sous_categories(request):
     return HttpResponse(html_dropdown)
 
 
+
+
+from collections import defaultdict
+from django.views.generic import TemplateView
+from patrimoine.models import Bien, Province, Entite
+
 class CarteView(TemplateView):
     template_name = 'patrimoine/carte.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        biens = Bien.objects.select_related('entite__commune__departement__province', 'categorie')
-        carte_data = []
-        for bien in biens:
-            province = bien.entite.commune.departement.province
-            if province and province.latitude and province.longitude:
-                carte_data.append(
-                    {
-                        'province_nom': province.nom,
-                        'latitude': province.latitude,
-                        'longitude': province.longitude,
-                        'nb_biens': 1,
-                        'total': float(bien.valeur_initiale),
-                        'categorie': bien.categorie.nom,
-                        'annee': bien.date_acquisition.year,
-                    }
-                )
-        aggregated_data = defaultdict(
-            lambda: {'nb_biens': 0, 'total': 0, 'latitude': 0, 'longitude': 0, 'categorie': '', 'province_nom': ''}
-        )
-        for data_point in carte_data:
-            key = (data_point['province_nom'], data_point['categorie'])
-            agg_entry = aggregated_data[key]
-            agg_entry.update(
-                {
-                    'province_nom': data_point['province_nom'],
-                    'latitude': data_point['latitude'],
-                    'longitude': data_point['longitude'],
-                    'categorie': data_point['categorie'],
-                }
-            )
-            agg_entry['nb_biens'] += data_point['nb_biens']
-            agg_entry['total'] += data_point['total']
 
-        context['carte_data'] = list(aggregated_data.values())
+        biens = Bien.objects.select_related(
+            'commune__departement__province',
+            'categorie',
+            'entite'
+        )
+
+        carte_data = []
+
+        for bien in biens:
+            commune = bien.commune
+            if commune and commune.latitude and commune.longitude:
+                carte_data.append({
+                    'commune_nom': commune.nom,
+                    'latitude': float(commune.latitude),
+                    'longitude': float(commune.longitude),
+                    'categorie': bien.categorie.nom if bien.categorie else '',
+                    'annee': bien.date_acquisition.year if bien.date_acquisition else '',
+                    'province_nom': commune.departement.province.nom if commune.departement and commune.departement.province else '',
+                    'entite_nom': bien.entite.nom if bien.entite else '',
+                    'nb_biens': 1,
+                    'total': float(bien.valeur_initiale) if bien.valeur_initiale else 0,
+                })
+
+        context['carte_data'] = carte_data
         context['categories'] = sorted({bien.categorie.nom for bien in biens if bien.categorie})
-        context['annees'] = sorted({bien.date_acquisition.year for bien in biens}, reverse=True)
+        context['annees'] = sorted({bien.date_acquisition.year for bien in biens if bien.date_acquisition}, reverse=True)
+        context['provinces'] = list(Province.objects.values_list('nom', flat=True))
+        context['entites'] = list(Entite.objects.values_list('nom', flat=True))
+
         return context

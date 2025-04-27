@@ -1,21 +1,15 @@
-# Environnements Python
-env/
+# Django
 *.pyc
 __pycache__/
-
-# Fichiers Django
 db.sqlite3
+.env
 
-# Éditeur
+# Node, SASS compilé
+node_modules/
+static/css/
+static/scss/
+staticfiles/
+
+# IDE
 .vscode/
 .idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Migrations
-*/migrations/*.pyc
-*/migrations/__pycache__/
-*/migrations/*.py
-!*/migrations/__init__.py

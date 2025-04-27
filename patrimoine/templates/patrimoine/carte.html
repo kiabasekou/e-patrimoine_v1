@@ -5,10 +5,10 @@
 {% block content %}
 <div class="container py-4">
   <h1>🌐 Répartition géographique des biens</h1>
-  <p class="text-muted">Cliquez sur un cercle pour voir le détail par province.</p>
+  <p class="text-muted">Cliquez sur un cercle pour voir le détail par commune.</p>
 
   <div class="row mb-3">
-    <div class="col-md-6">
+    <div class="col-md-3">
       <label for="filtreCategorie" class="form-label">Filtrer par catégorie :</label>
       <select id="filtreCategorie" class="form-select">
         <option value="">Toutes les catégories</option>
@@ -17,12 +17,30 @@
         {% endfor %}
       </select>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-3">
       <label for="filtreAnnee" class="form-label">Filtrer par année :</label>
       <select id="filtreAnnee" class="form-select">
         <option value="">Toutes les années</option>
         {% for an in annees %}
           <option value="{{ an }}">{{ an }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="filtreProvince" class="form-label">Filtrer par province :</label>
+      <select id="filtreProvince" class="form-select">
+        <option value="">Toutes les provinces</option>
+        {% for prov in provinces %}
+          <option value="{{ prov }}">{{ prov }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="filtreEntite" class="form-label">Filtrer par entité :</label>
+      <select id="filtreEntite" class="form-select">
+        <option value="">Toutes les entités</option>
+        {% for ent in entites %}
+          <option value="{{ ent }}">{{ ent }}</option>
         {% endfor %}
       </select>
     </div>
@@ -53,23 +71,30 @@ document.addEventListener('DOMContentLoaded', function() {
   const mapEl = document.getElementById('map');
   const filterCat = document.getElementById('filtreCategorie');
   const filterYear = document.getElementById('filtreAnnee');
+  const filterProv = document.getElementById('filtreProvince');
+  const filterEntite = document.getElementById('filtreEntite');
   const data = {{ carte_data|safe }};
+  console.log("🚀 Données carte :", data);
 
-  // Initialisation de la carte
   const map = L.map(mapEl).setView([0.3901, 9.4544], 6);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Groupe de clusters
   const markers = L.markerClusterGroup();
 
-  function renderMarkers(cat, year) {
+  function renderMarkers(cat, year, prov, entite) {
     loader.style.display = 'block';
     markers.clearLayers();
 
     data.forEach(p => {
-      if ((!cat || p.categorie === cat) && (!year || p.annee === +year)) {
+      console.log(p.latitude, p.longitude, p.commune_nom);
+      if (
+        (!cat || p.categorie === cat) &&
+        (!year || p.annee === +year) &&
+        (!prov || (p.province_nom && p.province_nom === prov)) &&
+        (!entite || (p.entite_nom && p.entite_nom === entite))
+      ) {
         const circle = L.circleMarker([p.latitude, p.longitude], {
           radius: Math.min(8 + p.nb_biens, 25),
           fillColor: '#007bff',
@@ -78,9 +103,9 @@ document.addEventListener('DOMContentLoaded', function() {
           opacity: 1,
           fillOpacity: 0.6
         }).bindPopup(`
-          <strong>${p.province_nom}</strong><br>
+          <strong>${p.commune_nom}</strong><br>
           ${p.nb_biens} bien(s)<br>
-          Valeur totale : ${Number(p.total).toLocaleString()} FCFA
+          Valeur totale : ${Number(p.total).toLocaleString()} FCFA
         `);
 
         circle.on('mouseover', () => circle.setStyle({
@@ -100,15 +125,21 @@ document.addEventListener('DOMContentLoaded', function() {
     loader.style.display = 'none';
   }
 
-  filterCat.addEventListener('change', () =>
-    renderMarkers(filterCat.value, filterYear.value)
-  );
-  filterYear.addEventListener('change', () =>
-    renderMarkers(filterCat.value, filterYear.value)
-  );
+  function refresh() {
+    renderMarkers(
+      filterCat.value,
+      filterYear.value,
+      filterProv.value,
+      filterEntite.value
+    );
+  }
 
-  // Affichage initial
-  renderMarkers('', '');
+  filterCat.addEventListener('change', refresh);
+  filterYear.addEventListener('change', refresh);
+  filterProv.addEventListener('change', refresh);
+  filterEntite.addEventListener('change', refresh);
+
+  renderMarkers('', '', '', '');
 });
 </script>
 {% endblock extra_js %}

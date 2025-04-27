@@ -2,17 +2,21 @@ import os
 import django
 import pandas as pd
 
-# Initialiser Django
+# Initialisation Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "patrimoine_project.settings")
 django.setup()
 
 from patrimoine.models import Province, Departement, Commune
 
-# Lecture du CSV corrigé
+# Lecture du fichier CSV corrigé
 file_path = "decoupage_gabon_corrige.csv"
-df = pd.read_csv(file_path, encoding="utf-8-sig", sep=';')
+df = pd.read_csv(file_path, encoding="latin1", sep=',')
 
-# Nettoyage général
+print("🚀 Colonnes disponibles :", df.columns.tolist())
+
+
+
+# Nettoyage des noms (remplacer , et . par é)
 def nettoyer_nom(val):
     if isinstance(val, str):
         return val.replace(",", "é").replace(".", "é").strip()
@@ -22,12 +26,13 @@ df = df.applymap(nettoyer_nom)
 
 print(f"📄 Fichier chargé : {len(df)} lignes")
 
-# Injection
+# Injection des données géographiques
 for _, row in df.iterrows():
     province_nom = row['Province']
     departement_nom = row['Departement']
     commune_nom = row['Commune']
 
+    # Ne pas arrondir, prendre tous les floats
     latitude = float(row.get('Latitude', 0))
     longitude = float(row.get('Longitude', 0))
 

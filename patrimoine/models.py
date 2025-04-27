@@ -29,8 +29,7 @@ class SousCategorie(models.Model):
 # ----------- LOCALISATION -----------
 class Province(models.Model):
     nom = models.CharField(max_length=100)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    
 
     def __str__(self):
         return self.nom
@@ -45,9 +44,14 @@ class Departement(models.Model):
 class Commune(models.Model):
     nom = models.CharField(max_length=100)
     departement = models.ForeignKey(Departement, on_delete=models.CASCADE)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
+    # lien avec Département / Province
 
     def __str__(self):
-        return f"{self.nom} ({self.departement.nom})"
+        return self.nom
+
 
 class District(models.Model):
     nom = models.CharField(max_length=100)
@@ -79,6 +83,7 @@ class Bien(models.Model):
     categorie = models.ForeignKey(Categorie, on_delete=models.PROTECT)
     sous_categorie = models.ForeignKey(SousCategorie, on_delete=models.PROTECT, null=True, blank=True)
     entite = models.ForeignKey(Entite, on_delete=models.CASCADE)
+    commune = models.ForeignKey(Commune, on_delete=models.SET_NULL, null=True, blank=True)  # 🔁 Ajout ici
     valeur_initiale = models.DecimalField(max_digits=12, decimal_places=2)
     date_acquisition = models.DateField()
     description = models.TextField(blank=True)

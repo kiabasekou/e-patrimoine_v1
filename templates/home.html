@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Accueil - Gestion du Patrimoine{% endblock title %}
+
+{% block content %}
+<div class="py-5 text-center">
+  <h1 class="display-5 fw-bold text-primary">Bienvenue sur ePatrimoine</h1>
+  <p class="lead text-muted">Suivi et valorisation du patrimoine matériel de l'État</p>
+</div>
+
+<div class="row g-4 justify-content-center">
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="display-6 mb-2">📋</div>
+        <h5 class="card-title">Liste des biens</h5>
+        <p class="card-text">Accédez à l’ensemble des biens enregistrés dans le système.</p>
+        <a href="{% url 'biens:bien_list' %}" class="btn btn-primary">Voir la liste</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="display-6 mb-2">➕</div>
+        <h5 class="card-title">Ajouter un bien</h5>
+        <p class="card-text">Enregistrez un nouveau bien dans le registre centralisé.</p>
+        <a href="{% url 'biens:bien_create' %}" class="btn btn-success">Ajouter</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="display-6 mb-2">📊</div>
+        <h5 class="card-title">Tableau de bord</h5>
+        <p class="card-text">Visualisez les données du patrimoine à travers des graphiques interactifs.</p>
+        <a href="{% url 'biens:dashboard' %}" class="btn btn-warning text-white">Accéder</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-4 justify-content-center">
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm border-0">
+      <div class="card-body text-center">
+        <div class="display-6 mb-2">🌐</div>
+        <h5 class="card-title">Carte interactive</h5>
+        <p class="card-text">Explorez la localisation géographique des biens patrimoniaux.</p>
+        <a href="{% url 'biens:carte' %}" class="btn btn-secondary text-white">Voir la carte</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
