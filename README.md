@@ -1,61 +1,62 @@
-# 🏛️ Gestion du Patrimoine - Django App
+# e-patrimoine 1.0
 
-Application web de gestion du patrimoine des biens matériels, développée avec Django.  
-Elle permet de suivre l'inventaire, la valeur actuelle, et l'évolution des actifs.
+Une application web de gestion de patrimoine développée avec Django, permettant de suivre, gérer et monitorer les actifs d'une organisation.
 
----
+![Dashboard Screenshot](docs/screenshots/dashboard.png)
 
-## 🚀 Fonctionnalités principales
+## Fonctionnalités
 
-- 🔎 Liste, ajout, modification, suppression de biens
-- 🏷️ Gestion des catégories et des entités d'affectation
-- 📈 Suivi de l'historique de la valeur des biens dans le temps
-- 🧾 Dashboard synthétique : valeur totale, répartition par catégorie/entité
-- 📊 Visualisation graphique de l’évolution de la valeur (Chart.js)
-- 🔐 Interface d’administration Django
+- Inventaire complet des biens avec filtres et recherche
+- Catégorisation flexible des actifs
+- Profils techniques spécialisés selon le type de bien
+- Suivi de l'historique des valeurs
+- Carte interactive de répartition géographique
+- Tableau de bord avec statistiques et graphiques
+- Gestion des responsables et des affectations
 
----
+## Prérequis
 
-## 🛠️ Technologies utilisées
+- Python 3.8+
+- Django 5.x
+- Autres dépendances listées dans requirements.txt
 
-- [Django 5.x](https://www.djangoproject.com/)
-- [SQLite](https://www.sqlite.org/index.html) (dev) / PostgreSQL (prod)
-- [python-decouple](https://pypi.org/project/python-decouple/)
-- [Chart.js](https://www.chartjs.org/) pour les graphiques
-- Bootstrap (optionnel pour mise en forme)
+## Installation
 
----
-
-## 📦 Installation locale
-
-### 1. Cloner le dépôt
-
-```bash
-git clone https://github.com/kiabasekou/gestion_patrimoine.git
-cd gestion_patrimoine
-
-python -m venv env
-env\Scripts\activate  # sous Windows
-
-pip install -r requirements.txt
-
-SECRET_KEY=votre-cle-secrete
-DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,localhost
-
-python manage.py runserver
+1. Cloner le dépôt
+2. Créer et activer un environnement virtuel
 
 
-gestion_patrimoine/
-├── patrimoine_project/    ← configuration Django
-├── patrimoine/            ← logique métier
-├── templates/             ← HTML global (base, dashboard)
-├── static/                ← fichiers statiques (optionnels)
-├── .env                   ← variables sensibles (non versionné)
-├── db.sqlite3             ← base de données locale
-└── README.md
 
 
-✍️ Auteur
-Ahmed Souaré
-Ministère de la Santé, République Gabonaise
+7. Accéder à l'application à l'adresse http://127.0.0.1:8000/
+
+## Structure du projet
+
+- `patrimoine/` - Application principale
+- `patrimoine_project/` - Configuration du projet
+- `static/` - Fichiers statiques (CSS, JavaScript, images)
+- `templates/` - Templates HTML
+
+## Contribution
+
+Les contributions sont les bienvenues! Veuillez suivre ces étapes:
+
+1. Forker le projet
+2. Créer une branche pour votre fonctionnalité (`git checkout -b feature/amazing-feature`)
+3. Commiter vos changements (`git commit -m 'Add some amazing feature'`)
+4. Pousser vers la branche (`git push origin feature/amazing-feature`)
+5. Ouvrir une Pull Request
+
+## Licence
+
+Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+## Contact
+
+Ahmed SOUARE - souare.ahmed@gmail.com - +241 77 96 38 47
+
+## Remerciements
+
+- [Bootstrap](https://getbootstrap.com/)
+- [Chart.js](https://www.chartjs.org/)
+- [Leaflet](https://leafletjs.com/)

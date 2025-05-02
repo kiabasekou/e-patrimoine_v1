@@ -1,4 +1,5 @@
+
 <option value="">---------</option>
-{% for sc in sous_categories %}
-  <option value="{{ sc.id }}">{{ sc.nom }}</option>
+{% for sous_categorie in sous_categories %}
+    <option value="{{ sous_categorie.pk }}">{{ sous_categorie.nom }}</option>
 {% endfor %}

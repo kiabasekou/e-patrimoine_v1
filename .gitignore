@@ -1,36 +1,46 @@
-# Environnement Python
-*.pyc
-*.pyo
+# Python
 __pycache__/
-env/
-venv/
-ENV/
-.venv/
+*.py[cod]
+*$py.class
+*.so
 .Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
 
 # Django
+*.log
+local_settings.py
 db.sqlite3
-/media/
-staticfiles/
-static/css/
-static/scss/
+db.sqlite3-journal
+media/
 
-# Fichiers de config sensibles
-*.env
-*.env.local
-*.env.prod
+# Environnement virtuel
+venv/
+ENV/
+env/
 
-# Node.js / Frontend
-node_modules/
-npm-debug.log
-yarn-error.log
-build/
-
-# Visual Studio Code
-.vscode/
-
-# PyCharm
+# IDE
 .idea/
+.vscode/
+*.swp
+*.swo
 
-# Git
-.git/
+# OS
+.DS_Store
+Thumbs.db
+
+# Dossiers spécifiques à l'application
+justificatifs/

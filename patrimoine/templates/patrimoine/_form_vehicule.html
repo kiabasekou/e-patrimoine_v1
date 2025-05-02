@@ -1,23 +1,58 @@
-<div class="card mt-4">
-  <div class="card-header bg-dark text-white">🚗 Profil Véhicule de service</div>
-  <div class="card-body">
-    {% if profil_form %}
-      {% for field in profil_form.visible_fields %}
-        <div class="mb-3">
-          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-          {{ field }}
-          {% if field.help_text %}
-            <small class="form-text text-muted">{{ field.help_text }}</small>
-          {% endif %}
-          {% for error in field.errors %}
-            <div class="text-danger small">{{ error }}</div>
-          {% endfor %}
+
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Caractéristiques du véhicule</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ profil_form.marque.id_for_label }}" class="form-label">Marque</label>
+                    {{ profil_form.marque }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ profil_form.modele.id_for_label }}" class="form-label">Modèle</label>
+                    {{ profil_form.modele }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ profil_form.immatriculation.id_for_label }}" class="form-label">Immatriculation</label>
+                    {{ profil_form.immatriculation }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ profil_form.type_vehicule.id_for_label }}" class="form-label">Type de véhicule</label>
+                    {{ profil_form.type_vehicule }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ profil_form.date_fabrication.id_for_label }}" class="form-label">Date de fabrication</label>
+                    {{ profil_form.date_fabrication }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ profil_form.date_acquisition.id_for_label }}" class="form-label">Date d'acquisition</label>
+                    {{ profil_form.date_acquisition }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ profil_form.date_derniere_maintenance.id_for_label }}" class="form-label">Dernière maintenance</label>
+                    {{ profil_form.date_derniere_maintenance }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ profil_form.prochaine_maintenance.id_for_label }}" class="form-label">Prochaine maintenance</label>
+                    {{ profil_form.prochaine_maintenance }}
+                </div>
+            </div>
         </div>
-      {% endfor %}
-    {% else %}
-      <div class="alert alert-info">
-        Ce bien ne dispose pas de profil de véhicule structuré.
-      </div>
-    {% endif %}
-  </div>
+    </div>
 </div>
