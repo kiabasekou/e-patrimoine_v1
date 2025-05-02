@@ -1,10 +1,21 @@
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, F
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
+
+
+# api/views.py
+from rest_framework import viewsets, filters
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+
+from ..serializers import (BienSerializer, BienDetailSerializer, 
+                         CategorieSerializer, EntiteSerializer,
+                         StatistiquesSerializer)
 
 # Ajoutez cette ligne pour importer Workbook
 from openpyxl import Workbook
@@ -104,43 +115,62 @@ class DetailViewMixin:
         context['historiques'] = self.object.historiques.order_by('date')
         return context
 
+# views.py - Exemple de vue optimisée
+from django.views.generic import DetailView
+from .models import Bien
+from .services.bien_service import BienService
+from .permissions.patrimoine_permissions import bien_permission_required, BienPermissions
 
-class BienDetailView(DetailView, DetailViewMixin):
-
+class BienDetailView(DetailView):
     model = Bien
     template_name = 'patrimoine/bien_detail.html'
     context_object_name = 'bien'
-
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Vérifier les permissions
+        bien = self.get_object()
+        if not BienPermissions.peut_voir_bien(request.user, bien):
+            raise PermissionDenied("Vous n'avez pas les permissions pour voir ce bien.")
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        # Optimiser les requêtes avec select_related et prefetch_related
+        return Bien.objects.select_related(
+            'categorie', 
+            'sous_categorie',
+            'entite',
+            'commune__departement__province'
+        ).prefetch_related(
+            'historiques',
+            'responsabilites__responsable'
+        )
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Ajouter l'historique des valeurs
+        # Utiliser le service pour obtenir des données
         context['historiques'] = self.object.historiques.order_by('-date')
-        
-        # Ajouter le formulaire pour l'ajout d'une valeur
         context['form'] = HistoriqueValeurForm()
-        
-        # Ajouter tous les responsables disponibles
         context['all_responsables'] = ResponsableBien.objects.all().order_by('nom', 'prenom')
         
-        # Ajouter les profils techniques selon le type de bien
-        if hasattr(self.object, 'profil_vehicule'):
-            context['profil_vehicule'] = self.object.profil_vehicule
-        elif hasattr(self.object, 'profil_immeuble'):
-            context['profil_immeuble'] = self.object.profil_immeuble
-        elif hasattr(self.object, 'profil_informatique'):
-            context['profil_informatique'] = self.object.profil_informatique
-        elif hasattr(self.object, 'profil_equipement_medical'):
-            context['profil_equipement_medical'] = self.object.profil_equipement_medical
-        elif hasattr(self.object, 'profil_mobilier'):
-            context['profil_mobilier'] = self.object.profil_mobilier
-        elif hasattr(self.object, 'profil_terrain'):
-            context['profil_terrain'] = self.object.profil_terrain
-        elif hasattr(self.object, 'profil_consommable'):
-            context['profil_consommable'] = self.object.profil_consommable
+        # Charger les profils techniques
+        self._charger_profil_technique(context)
         
         return context
-
+    
+    def _charger_profil_technique(self, context):
+        """Extrait la logique de chargement des profils techniques"""
+        bien = self.object
+        profil_attrs = [
+            'profil_vehicule', 'profil_immeuble', 'profil_informatique', 
+            'profil_equipement_medical', 'profil_mobilier', 'profil_terrain', 
+            'profil_consommable'
+        ]
+        
+        for attr in profil_attrs:
+            if hasattr(bien, attr):
+                context[attr] = getattr(bien, attr)
+                
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         action = request.POST.get('action') or request.GET.get('action')
@@ -363,3 +393,55 @@ def ajouter_bien(request):
         return redirect('biens:bien_detail', pk=bien.pk)
 
     return render(request, 'patrimoine/ajouter_bien.html', {'bien_form': bien_form, 'profil_form': profil_form})
+
+
+# api/views.py
+class BienViewSet(viewsets.ModelViewSet):
+    queryset = Bien.objects.all()
+    serializer_class = BienSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['categorie', 'sous_categorie', 'entite', 'commune__departement__province']
+    search_fields = ['nom', 'description', 'numero_serie']
+    ordering_fields = ['nom', 'valeur_initiale', 'date_acquisition']
+    
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return BienDetailSerializer
+        return BienSerializer
+    
+    @action(detail=False, methods=['get'])
+    def statistiques(self, request):
+        """Fournit des statistiques globales sur les biens"""
+        # Filtrer selon les paramètres
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Calculer les statistiques
+        stats = {
+            'nombre_total': queryset.count(),
+            'valeur_totale': queryset.aggregate(Sum('valeur_initiale'))['valeur_initiale__sum'] or 0,
+            'par_categorie': list(queryset.values(
+                categorie=F('categorie__nom')
+            ).annotate(
+                count=Count('id'),
+                valeur=Sum('valeur_initiale')
+            ).order_by('-count')),
+            'par_entite': list(queryset.values(
+                entite=F('entite__nom')
+            ).annotate(
+                count=Count('id'),
+                valeur=Sum('valeur_initiale')
+            ).order_by('-count')),
+        }
+        
+        serializer = StatistiquesSerializer(stats)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def historique(self, request, pk=None):
+        """Récupère l'historique des valeurs d'un bien"""
+        bien = self.get_object()
+        historiques = bien.historiques.all().order_by('-date')
+        
+        from ..serializers import HistoriqueValeurSerializer
+        serializer = HistoriqueValeurSerializer(historiques, many=True)
+        return Response(serializer.data)

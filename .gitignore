@@ -27,7 +27,7 @@ db.sqlite3
 db.sqlite3-journal
 media/
 
-# Environnement virtuel
+# Environnements virtuels
 venv/
 ENV/
 env/
@@ -38,9 +38,5 @@ env/
 *.swp
 *.swo
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Dossiers spécifiques à l'application
-justificatifs/
+# Fichiers sensibles
+.env
