@@ -4,6 +4,7 @@ from .models import (
     Province, Departement, Commune, District,
     ResponsableBien, BienResponsabilite
 )
+# ... reste du fichier inchangé ...
 from django.utils.translation import gettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 

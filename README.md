@@ -60,3 +60,31 @@ Ahmed SOUARE - souare.ahmed@gmail.com - +241 77 96 38 47
 - [Bootstrap](https://getbootstrap.com/)
 - [Chart.js](https://www.chartjs.org/)
 - [Leaflet](https://leafletjs.com/)
+
+
+# e-patrimoine
+
+Application web de gestion de patrimoine développée avec Django, permettant de suivre, gérer et monitorer les actifs d'une organisation.
+
+## Fonctionnalités
+
+- Inventaire complet des biens avec filtres et recherche
+- Catégorisation flexible des actifs
+- Profils techniques spécialisés selon le type de bien
+- Suivi de l'historique des valeurs
+- Carte interactive de répartition géographique
+- Tableau de bord avec statistiques et graphiques
+- Gestion des responsables et des affectations
+
+## Prérequis
+
+- Python 3.8+
+- Django 5.x
+- Autres dépendances listées dans requirements.txt
+
+## Installation
+
+1. Cloner le dépôt
+   ```bash
+   git clone https://github.com/votre-username/e-patrimoine.git
+   cd e-patrimoine

@@ -5,8 +5,6 @@ from .models import (
     Bien,
     HistoriqueValeur,
     SousCategorie,
-)
-from .profils import (
     ProfilVehicule,
     ProfilImmeuble,
     ProfilInformatique,
@@ -96,10 +94,14 @@ class ProfilVehiculeForm(BaseProfilForm):
         model = ProfilVehicule
         exclude = ['bien']
         widgets = {
-            'date_fabrication': forms.DateInput(),
-            'date_acquisition': forms.DateInput(),
-            'date_derniere_maintenance': forms.DateInput(),
-            'prochaine_maintenance': forms.DateInput(),
+            'marque': forms.TextInput(attrs={'class': 'form-control'}),
+            'modele': forms.TextInput(attrs={'class': 'form-control'}),
+            'matricule': forms.TextInput(attrs={'class': 'form-control'}),  # Renommé de 'immatriculation' à 'matricule'
+            'numero_chassis': forms.TextInput(attrs={'class': 'form-control'}),
+            'date_fabrication': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'date_acquisition': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'date_derniere_maintenance': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'prochaine_maintenance': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
 
 
@@ -144,14 +146,17 @@ class ProfilEquipementMedicalForm(BaseProfilForm):
         }
 
 
+# Correction des formulaires pour correspondre aux modèles
 class ProfilMobilierForm(BaseProfilForm):
     class Meta:
         model = ProfilMobilier
         exclude = ['bien']
         widgets = {
-            'annee_fabrication': forms.NumberInput(attrs={'min': 1900, 'max': 2100}),
+            'materiau': forms.TextInput(attrs={'class': 'form-control'}),
+            'couleur': forms.TextInput(attrs={'class': 'form-control'}),
+            'fabricant': forms.TextInput(attrs={'class': 'form-control'}),
+            'annee_fabrication': forms.NumberInput(attrs={'min': 1900, 'max': 2100, 'class': 'form-control'}),
         }
-
 
 class ProfilTerrainForm(BaseProfilForm):
     class Meta:
